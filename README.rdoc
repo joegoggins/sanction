@@ -1,4 +1,5 @@
 =Sanction
+
 A role based permissions management system designed to have an intuitive and useful API making an authorization system easy and painless. (Even Fun!)
 
 Sanction works on the basis of principals and permissionables. Principals are those classes which can hold agency over a permissionable. In the initial
