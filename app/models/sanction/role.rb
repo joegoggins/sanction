@@ -11,6 +11,7 @@ class Sanction::Role < ActiveRecord::Base
 
 
   # A helper to see if the Role is over all permissionable instances of a given class
+  # 
   #
   def permissionable_over_all?
     self.permissionable_id.blank? && (not self.permissionable_type.blank?)
