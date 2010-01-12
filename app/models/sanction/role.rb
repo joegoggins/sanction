@@ -7,6 +7,31 @@ class Sanction::Role < ActiveRecord::Base
   #--------------------------------------------------#
   belongs_to :principal, :polymorphic => true
   belongs_to :permissionable, :polymorphic => true
+
+
+
+  # A helper to see if the Role is over all permissionable instances of a given class
+  #
+  def permissionable_over_all?
+    self.permissionable_id.blank? && (not self.permissionable_type.blank?)
+  end
+    
+  # A helper to see if the foreign record exists
+  #
+  def principal_valid?
+    !self.principal.blank?
+  end
+  
+  # Be careful with this method--it's only meant to be used
+  # when the referenced permissionable is supposed to be actually exist
+  # 
+  def permissionable_valid?
+    if self.global? || self.permissionable_over_all?
+      raise "Sorry--this function is only meant to be executed on objects that are supposed to have a referenced permissionable"
+    end
+    (not self.permissionable.blank?)
+  end
+  
   validates_presence_of :permissionable_type, :if => Proc.new {|r| !r.global?}
   validates_presence_of :name
 

@@ -166,6 +166,7 @@ module Sanction
       #--------------------------------------------------#
       cattr_accessor :roles_by_name, :roles_by_principal, :roles_by_permissionable, :global_roles, :names, :roles_by_permission, :all_roles, :wildcard_roles
       
+      # NOTE: all_roles DO NOT include global roles
       self.all_roles               = []
       self.wildcard_roles          = []
       self.roles_by_name          = {}
