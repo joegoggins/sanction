@@ -19,14 +19,14 @@ class Sanction::Role < ActiveRecord::Base
     
   # A helper to see if the foreign record exists
   #
-  def principal_valid?
+  def principal_exists?
     !self.principal.blank?
   end
   
   # Be careful with this method--it's only meant to be used
   # when the referenced permissionable is supposed to be actually exist
   # 
-  def permissionable_valid?
+  def permissionable_exists?
     if self.global? || self.permissionable_over_all?
       raise "Sorry--this function is only meant to be executed on objects that are supposed to have a referenced permissionable"
     end
