@@ -15,7 +15,7 @@ module Sanction
       #--------------------------------------------------#
       #                   Initialize                     #
       #--------------------------------------------------#
-      attr_accessor :name, :principals, :permissionables, :global, :wildcard, :permissions, :includes, :about
+      attr_accessor :name, :principals, :permissionables, :global, :wildcard, :permissions, :includes, :purpose
 
       def initialize(name, relationship_and_options)
         self.name = name
@@ -184,7 +184,7 @@ module Sanction
       ANYTHING_TOKEN    = :anything
       GLOBAL_TOKEN      = :global
       RESERVED_TOKENS   = [ANY_TOKEN, ALL_TOKEN, ANYTHING_TOKEN, GLOBAL_TOKEN]
-      OPTION_KEYS       = [:having, :includes, :about]
+      OPTION_KEYS       = [:having, :includes, :purpose]
 
       #--------------------------------------------------#
       #            Initialize Helpers                    #
@@ -273,7 +273,7 @@ module Sanction
         self.permissions = self.permissions.map(&:to_sym)
        
         self.wildcard = true if self.permissions.include? :anything
-        self.about = options[:about]
+        self.purpose = options[:purpose]
       end
 
       #--------------------------------------------------#
