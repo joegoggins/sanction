@@ -16,21 +16,10 @@ Sanction.configure do |config|
   # config.role :owner,  Person => Magazine, :includes => [:editor, :writer]
   # config.role :boss,   Person => Person
   
-  # If you are integrating with sanction_ui, don't forget to add elements to a
-  # :having clause on one or more roles above (like :having => [:can_add_role])
-  #
-  # :can_view_sui_index
-  #   => Show the root page of sanction_ui
+  # If you are integrating with sanction_ui, don't forget to add a role something like:
+  # config.role :permission_manager, 
+  #             Person => :global, 
+  #             :having => [:can_add_role,:can_view_permissions,:can_remove_role,:can_describe_role], 
+  #             :purpose => "to manage who can access what in the application"
   # 
-  #   :can_view_sui_roles_index
-  #   => The main page where permissions management happens
-  #   
-  #   :can_add_role
-  #   => Add a role
-  #   
-  #   :can_remove_role
-  #   => Remove a role
-  #   
-  #   :can_describe_role
-  #   => Describe a role
 end
