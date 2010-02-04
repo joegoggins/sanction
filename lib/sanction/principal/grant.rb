@@ -31,7 +31,14 @@ module Sanction
       module InstanceMethods
         protected
         def give_global_role(role_name)
+          
           role_to_create = self.principal_roles.build(:name => role_name.to_s, :global => true)
+          # Needed for single table inheritance, say inheritance heirarchy like:
+          # Ps::Person < ActiveRecord::Base
+          # AppUser < Ps::Person
+          # without this line below, will save with the principal_type to Ps::Person...wrongly
+          #
+          role_to_create.principal_type = self.class.to_s 
           role_to_create.save
         end
         
