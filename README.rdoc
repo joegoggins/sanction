@@ -323,6 +323,9 @@ Append that at the end of any query:
 
 To get the accurate size.
 
+<b>Single Table Inheritance</b>
+Sanction will NOT work on principal classes that implement single table inheritance due to the funkyness associated with polymorphic relationships + STI in Rails.
+
 =Comments/Questions
 Let us know matthewvermaak [at] gmail {dot} com / peterleonhardt {at} gmail [dot] com
 
