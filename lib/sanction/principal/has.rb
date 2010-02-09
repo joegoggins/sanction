@@ -66,10 +66,6 @@ module Sanction
         def has_all?(*role_names)
           self.class.as_principal(self).has_all?(*role_names)
         end
-        
-        def has_any_role?
-          !self.principal_roles.empty?
-        end                         
       end
     end
   end
