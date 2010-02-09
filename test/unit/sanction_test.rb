@@ -11,6 +11,7 @@ class SanctionTest < Test::Unit::TestCase
       config.permissionables = [Person, Magazine, Magazines::Article]
       
       config.role :reader, Person => Magazine, :having => [:can_read]
+
       config.role :editor, Person => Magazine, :having => [:can_edit],  :includes => [:reader]
       config.role :writer, Person => Magazine, :having => [:can_write], :includes => [:reader]
       config.role :owner,  Person => Magazine, :includes => [:editor, :writer]
@@ -19,12 +20,20 @@ class SanctionTest < Test::Unit::TestCase
 
       config.role :super_user, Person => :global, :having => :anything
       config.role :admin,      Person => :global
+          
+      config.role :special_reader, Person => Magazine, :having => [:can_read], :and => :the_true_check?
     end
   end
 
 #--------------------------------------------------#
 #                   Response                       #
 #--------------------------------------------------#
+
+  def test_and_constraint
+    
+   # debugger  
+  end
+  
   def test_people_respond_to_grant
     assert Person.respond_to?( :grant )
     assert Person.first.respond_to?( :grant )
