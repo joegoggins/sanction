@@ -22,6 +22,7 @@ class SanctionTest < Test::Unit::TestCase
       config.role :admin,      Person => :global
           
       config.role :special_reader, Person => Magazine, :having => [:can_read], :and => :the_true_check?
+      config.role :special_writer, Person => Magazine, :having => [:can_read], :includes => [:special_reader]
     end
   end
 
@@ -30,8 +31,9 @@ class SanctionTest < Test::Unit::TestCase
 #--------------------------------------------------#
 
   def test_and_constraint
-    
-   # debugger  
+    require 'pp'
+    Sanction::Role::Definition
+    #debugger  
   end
   
   def test_people_respond_to_grant

@@ -31,6 +31,7 @@ module Sanction
         relationship, options = extract_options(relationship_and_options)
 
         resolve_relationship(relationship)
+        set_defaults
         assign_options(options)
         cache!
       end
@@ -161,6 +162,22 @@ module Sanction
       #--------------------------------------------------#
       #                 Convenience                      #
       #--------------------------------------------------#
+      def self.first
+        self.all_roles.first
+      end
+      
+      def self.last
+        self.all_roles.last
+      end
+
+      # Make the class behave like a sensible collection!
+      extend Enumerable
+      def self.each
+        self.all_roles.each do |x|
+          yield x
+        end
+      end
+      
       def describe
         prefix = principals.map(&:to_s).map(&:pluralize).join(", ")
         suffix = global ? "" : " for #{permissionables.map(&:to_s).map(&:pluralize).join(", ")}"
@@ -209,6 +226,19 @@ module Sanction
       #--------------------------------------------------#
       #            Initialize Helpers                    #
       #--------------------------------------------------#
+      def set_defaults
+        # THIS SHIT IS ALL COMMENTED OUT
+        # BECAUSE THE TEST CASES BLOW UP WHEN YOU ENABLE THEM
+        # self.principals = []
+        # self.permissionables = []
+        # # self.global 
+        # # self.wildcard # NOT SURE
+        # self.permissions = []
+        # self.includes = [] 
+        # self.purpose = ""
+        self.and_constraints = []
+      end
+      
       def extract_options(relationship_and_options)
         relationship = relationship_and_options.slice!(*OPTION_KEYS)
 
@@ -271,36 +301,56 @@ module Sanction
         self.includes += include_options unless include_options.blank?
       end
      
-      def establish_inheritance
+      def establish_permissions_inheritance
         inherited_permissions = []
-        self.includes.each do |inc| 
+        self.includes.each do |inc|
           matched = Sanction::Role::Definition.match(self.principals, inc, self.permissionables)
           if matched.respond_to? :permissions
-            inherited_permissions += (matched.permissions + [inc])
+             inherited_permissions += (matched.permissions + [inc])
           end
         end
         inherited_permissions.compact!
         inherited_permissions.uniq!
-     
         self.permissions += inherited_permissions unless inherited_permissions.blank?
       end
 
+      def establish_and_constraints_inheritance
+        # go through your includes finding roles with that name
+        # then add any and_constraints they have to your own and_constraints array
+        #
+        inherited_and_constraints = []
+        self.includes.each do |inc|
+          parents_with_and_constraints = Sanction::Role::Definition.find_all do |role_def|
+            role_def.name == inc &&
+            !role_def.and_constraints.empty?
+          end
+          parents_with_and_constraints.each do |role_def|
+            pp role_def.and_constraints
+            inherited_and_constraints += role_def.and_constraints
+          end
+        end
+        inherited_and_constraints.compact!
+        inherited_and_constraints.uniq!
+        self.and_constraints += inherited_and_constraints
+      end
+      
       def assign_options(options)
         establish_permissions(options.delete(:having))
         establish_includes(options.delete(:includes))
-        establish_inheritance
 
-        self.permissions = self.permissions.map(&:to_sym)
-       
-        self.wildcard = true if self.permissions.include? :anything
-        self.purpose = options[:purpose]
         if options[:and].kind_of? Array
           self.and_constraints = options[:and]
         elsif options[:and].kind_of? Symbol
           self.and_constraints = [options[:and]]
-        else
-          self.and_constraints = []
         end
+        establish_and_constraints_inheritance
+
+        establish_permissions_inheritance        
+        self.permissions = self.permissions.map(&:to_sym)
+       
+        self.wildcard = true if self.permissions.include? :anything
+        self.purpose = options[:purpose]
+        
       end
 
       #--------------------------------------------------#
