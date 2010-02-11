@@ -325,6 +325,7 @@ module Sanction
             !role_def.and_constraints.empty?
           end
           parents_with_and_constraints.each do |role_def|
+            pp role_def.and_constraints
             inherited_and_constraints += role_def.and_constraints
           end
         end
