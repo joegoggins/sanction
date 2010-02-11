@@ -9,6 +9,7 @@ module Sanction
           has_many :specific_principal_roles, :as => :principal, :class_name => "Sanction::Role", :dependent => :destroy
         }
 
+        # Executes at the class level like User.as_principal_self on actions like User.has? :can_edit
         base.named_scope :as_principal_self, lambda {
           already_joined = Sanction::Extensions::Joined.already? base, ROLE_ALIAS
  
@@ -18,6 +19,7 @@ module Sanction
               (#{ROLE_ALIAS}.principal_id = #{base.table_name}.#{base.primary_key.to_s} OR #{ROLE_ALIAS}.principal_id IS NULL)"} )
           end
         }
+
 
         base.named_scope :as_principal, lambda {|klass_instance|
           already_joined = Sanction::Extensions::Joined.already? base, ROLE_ALIAS
