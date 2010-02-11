@@ -25,6 +25,49 @@ module Sanction
               end
               role_names.flatten!
               role_names.uniq!
+              
+              
+              # find role def's with and constraints for these role_names
+              # iterate over each and condition, if any one return's false return
+              # :conditions => '1=0'
+              
+              # delegate one by one, if any return false, stop looping and add 1=0 to the :conditions
+              defs = Sanction::Role::Definition.find_all do |role_def|
+                role_def.global? &&
+                !role_def.and_constraints.empty? &&
+                (role_def.permissions - role_names).length != role_def.permissions
+              end
+              all_and_constraints = []
+              defs.each do |rdef|
+                all_and_constraints += rdef.and_constraints 
+              end
+              all_and_constraints.compact!
+              all_and_constraints.uniq!
+              puts "ABOUT TO BYPASS with "
+              require 'pp'
+              pp all_and_constraints
+              
+              bypass_operator = :and
+              all_and_constraints.each do |c|
+                if c.kind_of? Symbol
+                  if respond_to? c
+                    puts "RESPONDS"
+                    ret_val = send c # OVER TYPE todo
+                    case bypass_operator
+                      when :and
+                        # SINCE ITS "and" we shortcut things, if it's false we can be done without going further
+                        if !ret_val 
+                          return {:conditions => '1=0'}
+                        end
+                      when :or# TODO once :or_constraints are implemented if its true return true
+                      end
+                  end
+                else
+                  # could eventually do something with strings like self.name == "the_special_guy"
+                end
+              end
+              
+              
 
               conditions = role_names.map {|r| base.merge_conditions(["#{ROLE_ALIAS}.name = ?", r.to_s])}.join(" OR ")
               {:conditions => conditions}
@@ -56,39 +99,6 @@ module Sanction
       
       module InstanceMethods
         def has(*role_names)
-          # find all role defs that have any of these role_names
-          # that have and_constraints, execute these first before
-          # delving into sanction roles proper
-          defs = Sanction::Role::Definition.find_all do |role_def| 
-            !role_def.and_constraints.empty? &&
-            (role_def.permissions - role_names).length != role_def.permissions
-          end
-          all_and_constraints = []
-          defs.each do |rdef|
-            all_and_constraints += rdef.and_constraints 
-          end
-          all_and_constraints.compact!
-          all_and_constraints.uniq!
-
-          # require 'pp'
-          #           puts "BYPASSING SANCTION WITH THESE CONSTRAINTS"
-          #           pp all_and_constraints
-          bypass_operator = :and
-          all_and_constraints.each do |c|
-            if c.kind_of? Symbol
-              if respond_to? c
-                ret_val = send c # OVER TYPE todo
-                case bypass_operator
-                  when :and
-                    # SINCE ITS "and" we shortcut things, if it's false we can be done without going further
-                    return [] if !ret_val 
-                  when :or# TODO once :or_constraints are implemented if its true return true
-                  end
-              end
-            else
-              # could eventually do something with strings like self.name == "the_special_guy"
-            end
-          end
           self.class.as_principal(self).has_scope_method(*role_names)
         end
         
