@@ -3,9 +3,6 @@
 # the injections will take place based on these class vars.
 #
 module Sanction
-  # raised in eager_has? and eager_has_over? if :prinicpal_roles has not been eager loaded
-  #
-  class NotEagerLoadedException < Exception; end
 #--------------------------------------------------#
 #                   Public Api                     #
 #--------------------------------------------------#
