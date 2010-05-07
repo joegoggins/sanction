@@ -3,10 +3,11 @@ module Sanction
     module Base
       def self.extended(base)
         base.class_eval %q{
-          def principal_roles
-            Sanction::Role.for(self)
-          end
-         
+          has_many :principal_roles, :as => :principal, :class_name => "Sanction::Role", 
+                   :finder_sql => 'SELECT * FROM #{Sanction::Role.table_name} 
+                                   WHERE roles.principal_type = "#{self.class.name.to_s}" 
+                                   AND (roles.principal_id = "#{id}" OR roles.principal_id IS NULL)'
+                   
           def self.principal_roles
             Sanction::Role.for(self)
           end
