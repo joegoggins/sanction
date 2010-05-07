@@ -15,7 +15,7 @@ module Sanction
       #--------------------------------------------------#
       #                   Initialize                     #
       #--------------------------------------------------#
-      attr_accessor :name, :principals, :permissionables, :global, :wildcard, :permissions, :includes
+      attr_accessor :name, :principals, :permissionables, :global, :wildcard, :permissions, :includes, :purpose
 
       def initialize(name, relationship_and_options)
         self.name = name
@@ -156,6 +156,21 @@ module Sanction
         "#{prefix} can have #{name.to_s.titleize}#{suffix}"
       end
 
+      def self.first
+         self.all_roles.first
+       end
+
+       def self.last
+         self.all_roles.last
+       end
+
+       # Make the class behave like a sensible collection!
+       extend Enumerable
+       def self.each
+         self.all_roles.each do |x|
+           yield x
+         end
+       end
 
       #--------------------------------------------------#
       #                  Private API                     #
@@ -183,7 +198,7 @@ module Sanction
       ANYTHING_TOKEN    = :anything
       GLOBAL_TOKEN      = :global
       RESERVED_TOKENS   = [ANY_TOKEN, ALL_TOKEN, ANYTHING_TOKEN, GLOBAL_TOKEN]
-      OPTION_KEYS       = [:having, :includes]
+      OPTION_KEYS       = [:having, :includes, :purpose]
 
       #--------------------------------------------------#
       #            Initialize Helpers                    #
@@ -272,6 +287,7 @@ module Sanction
         self.permissions = self.permissions.map(&:to_sym)
        
         self.wildcard = true if self.permissions.include? :anything
+        self.purpose = options[:purpose]
       end
 
       #--------------------------------------------------#

@@ -5,6 +5,8 @@ module Sanction
     def self.included(base) 
       base.extend Sanction::Principal::Base
       base.send(:include, Sanction::Principal::Has)
+      base.send(:include, Sanction::Principal::EagerHas)
+      
       base.send(:include, Sanction::Principal::Over)
       
       base.send(:include, Sanction::Principal::Grant)
