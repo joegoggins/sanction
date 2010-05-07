@@ -498,4 +498,72 @@ class SanctionTest < Test::Unit::TestCase
     magazine.destroy
     person.destroy
   end
+  #--------------------------------------------------#
+  #               Eager has? + has_over?             #
+  #--------------------------------------------------#
+  def test_people_respond_to_eager_has_and_has_over   
+    assert Person.first.respond_to?( :has )
+    assert Person.first.respond_to?( :has? )
+  end
+  
+  def test_way_to_utilize_eager_has_and_raises_exception_if_not_eager_loaded
+    # This is the default way to leverage the eager loading
+    person2 = Person.find(:first, :include => :eager_principal_roles)  
+    assert_nothing_raised { person2.eager_has?(:reader) }
+    assert_nothing_raised { person2.eager_has_over?(:reader, Magazine) }
+
+    # this way can work too if in the console or something
+    person = Person.create
+    assert_raise(Sanction::NotEagerLoadedException) { person.eager_has?(:reader) }
+    assert_kind_of Array, person.eager_principal_roles, "this will load the association, and make an eager_has? check work now"
+    # person is now loaded correctly, so checks work
+    assert_nothing_raised { person.eager_has?(:reader) }
+    assert_nothing_raised { person.eager_has_over?(:reader, Magazine) }
+    
+    # how not to use these functions
+    assert_raise(Sanction::InvalidEagerHasUse)  { person.eager_has?(:reader, Magazine) } # args can only be symbols
+    assert_raise(Sanction::InvalidEagerHasOverUse)  { person.eager_has_over?(:reader) } # last arg must be a permissionable
+
+  end
+  
+  # test meant to verify consistency with the non eager
+  # loaded way, each of these methods was initially populated by
+  # looking at the *_eager_has method
+  def test_global_roles_for_eager_has
+    person = Person.first(:include => :eager_principal_roles)
+    person.grant(:super_user)
+    assert person.has?(:super_user) == person.eager_has?(:super_user)    
+  end
+
+  def test_having_anything_for_eager_has
+    person = Person.first(:include => :eager_principal_roles)
+    assert person.grant(:super_user)
+    assert person.has?(:super_user) == person.eager_has?(:super_user)
+    assert person.has?(:anything) == person.eager_has?(:anything)
+    assert person.has?(:the_random_perm_name) == person.eager_has?(:the_random_perm_name)
+
+    person2 = Person.last(:include => :eager_principal_roles)
+    assert person2.grant(:admin)
+    assert person2.has?(:admin) == person2.eager_has?(:admin)
+    assert !person2.eager_has?(:anything)
+    assert !person2.eager_has?(:the_random_perm_name)
+    assert person2.has?(:anything) == person2.eager_has?(:anything)
+    assert person2.has?(:the_random_perm_name) == person2.eager_has?(:the_random_perm_name)    
+  end
+  
+  def test_includes_for_eager_has
+    person = Person.first(:include => :eager_principal_roles)
+    assert person.grant(:owner, Magazine.first)
+    assert person.has?(:reader) == person.eager_has?(:reader)
+    assert person.has(:reader).over?(Magazine.first) == person.eager_has_over?(:reader,Magazine.first)
+    
+    assert person.has?(:editor) == person.eager_has?(:editor)
+    assert person.has(:editor).over?(Magazine.first) == person.eager_has_over?(:editor, Magazine.first)
+    
+    assert person.has?(:writer) == person.eager_has?(:writer)
+    assert person.has(:writer).over?(Magazine.first) == person.eager_has_over?(:writer, Magazine.first)
+    
+    assert person.has?(:owner) == person.eager_has?(:owner)
+    assert person.has(:owner).over?(Magazine.first) == person.eager_has_over?(:owner,Magazine.first)
+  end
 end
