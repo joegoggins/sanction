@@ -8,14 +8,10 @@ module Sanction
     module EagerHas        
       def eager_load_check
         unless self.principal_roles.loaded? 
-          raise Sanction::NotEagerLoadedException, "You must load :principal_roles if you want to use eager_has? or eager_has_over? via .find(:include => :principal_roles), sanction_ui requires this option, your controller definition will look like
-          def current_principal
-            @current_principal ||= User.find(:first, :conditions => [\"name = ?\",'joe'], :include => :principal_roles)
-          end
-          
-          alternatively, if you are in the console, you can simply do
-            @user.principal_roles
-          first, then invoke the desired access control check
+          raise Sanction::NotEagerLoadedException, "
+          You must eager load :principal_roles if you want to use eager_has? or eager_has_over? 
+          aka load your object via .find(:include => :principal_roles) or invoke .principal_roles
+          before invoking eager_* methods
           "
         end
       end
