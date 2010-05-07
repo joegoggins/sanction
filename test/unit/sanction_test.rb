@@ -22,6 +22,10 @@ class SanctionTest < Test::Unit::TestCase
     end
   end
 
+
+  def teardown
+    Sanction::Role.delete_all # to prevent test cases from affecting one another
+  end
 #--------------------------------------------------#
 #                   Response                       #
 #--------------------------------------------------#
