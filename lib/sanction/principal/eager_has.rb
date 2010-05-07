@@ -3,30 +3,48 @@ module Sanction
   #
   class NotEagerLoadedException < Exception; end
   class InvalidEagerHasOverUse < Exception; end
+  class InvalidEagerHasUse < Exception; end
   
   module Principal
     module EagerHas        
       def eager_load_check
-        unless self.principal_roles.loaded? 
+        unless self.eager_principal_roles.loaded? 
           raise Sanction::NotEagerLoadedException, "
-          You must eager load :principal_roles if you want to use eager_has? or eager_has_over? 
-          aka load your object via .find(:include => :principal_roles) or invoke .principal_roles
+          You must eager load :eager_principal_roles if you want to use eager_has? or eager_has_over? 
+          aka load your object via .find(:include => :eager_principal_roles) or invoke .eager_principal_roles
           before invoking eager_* methods
           "
         end
       end
             
+      def wildcard_check(*role_names)
+        # .eager_has?(:anything) will yield true no matter what
+        if role_names.include? Sanction::Role::Definition::ANY_TOKEN && !self.eager_principal_roles.empty?
+          true
+        # does this user contain any wildcard roles, where all permissions are implied
+        elsif (Sanction::Role::Definition.wildcards.map {|x| x.name} - self.eager_principal_roles.map {|x| x.name.to_sym}).length != Sanction::Role::Definition.wildcards.length
+          return true
+        else
+          false          
+        end
+      end
       # Adding these to leverage eager loading for the default case
       # where permission checks are made in controllers and views, INSTEAD of using named_scopes
       # This was added to be MUCH faster than hitting the db
       #
       def eager_has?(*role_names)
         eager_load_check
+        if role_names.detect {|x| !x.kind_of? Symbol}
+          raise Sanction::InvalidEagerHasUse.new("You can only include symbols when calling eager_has? perhaps you meant to call eager_has_over?")
+        end
+        return true if wildcard_check(*role_names)
         role_definitions = Sanction::Role::Definition.find_all do |role_def|
           role_names.include?(role_def.name) ||
           (role_def.permissions - role_names).length != role_def.permissions.length # if any role names are in the .permissions array,
         end
-        self.principal_roles.each do |pr|
+
+        
+        self.eager_principal_roles.each do |pr|
           role_definitions.each do |role_def|
             if pr.name.to_sym == role_def.name
               return true
@@ -50,12 +68,12 @@ module Sanction
         end
         
         role_names = args[0..-2] # everything but the last argument
-        
+        return true if wildcard_check(*role_names)
         role_definitions = Sanction::Role::Definition.find_all do |role_def|
           (role_names.include?(role_def.name) || (role_def.permissions - role_names).length != role_def.permissions.length) &&
           role_def.permissionables.include?(effective_over_object_class.to_s)
         end
-        self.principal_roles.each do |pr|
+        self.eager_principal_roles.each do |pr|
           role_definitions.each do |role_def|
             if pr.name.to_sym == role_def.name &&
               role_def.permissionables.include?(pr.permissionable_type)

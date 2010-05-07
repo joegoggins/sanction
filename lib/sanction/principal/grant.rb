@@ -32,7 +32,11 @@ module Sanction
         protected
         def give_global_role(role_name)
           role_to_create = self.specific_principal_roles.build(:name => role_name.to_s, :global => true)
-          role_to_create.save
+          to_return = role_to_create.save
+          if self.eager_principal_roles.loaded?
+            self.eager_principal_roles.reload
+          end
+          to_return
         end
         
         def give_permissionable_role(role_name, over)
@@ -40,11 +44,14 @@ module Sanction
 
           if(over.class == Class)
             role_to_create = self.specific_principal_roles.build(:name => role_name.to_s, :permissionable_id => nil, :permissionable_type => over.to_s)
-            role_to_create.save
           else
-            role_to_create = self.specific_principal_roles.build(:name => role_name.to_s, :permissionable_id => over.id, :permissionable_type => over.class.to_s)
-            role_to_create.save
+            role_to_create = self.specific_principal_roles.build(:name => role_name.to_s, :permissionable_id => over.id, :permissionable_type => over.class.to_s)        
           end
+          to_return = role_to_create.save
+          if self.eager_principal_roles.loaded?
+            self.eager_principal_roles.reload
+          end
+          to_return
         end  
       end
 
