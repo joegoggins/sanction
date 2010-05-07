@@ -6,12 +6,22 @@ module Sanction
           def principal_roles
             Sanction::Role.for(self)
           end
+          # functionally equivilent to .principal_roles on a principal instance
+          # used by eager_has? and eager_has_over?
+          #
+          has_many :eager_principal_roles, :as => :principal, :class_name => "Sanction::Role", 
+                   :finder_sql => 'SELECT * FROM #{Sanction::Role.table_name} 
+                                   WHERE roles.principal_type = "#{self.class.name.to_s}" 
+                                   AND (roles.principal_id = "#{id}" OR roles.principal_id IS NULL)'
+         
          
           def self.principal_roles
             Sanction::Role.for(self)
           end
 
           has_many :specific_principal_roles, :as => :principal, :class_name => "Sanction::Role", :dependent => :destroy
+          
+          
         }
 
         base.named_scope :as_principal_self, lambda {
