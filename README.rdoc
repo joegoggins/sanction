@@ -1,124 +1,159 @@
-= Sanction: A role based permissions managment system.
-  # Declare the readers situation
+= Sanction: A Kick-access control Rails plugin
 
-  @user = User.find('you')
-  @a_tight_plugin = BitchinPlugin.find_by_name("Sanction")
+<b>if @you.has(:an_interest).over?(@a_tight_plugin)</b>
+  "Keep reading" 
+  else
+  "Find a different plugin"
+  end
 
-  @user.has(:an_interest).over?(@a_tight_plugin) ?
-    "Keep reading" : 
-    "Find a different plugin"
+== What is it
+Sanction is a role based permissions management (rails) plugin.
+
+It provides all of the back-end a Rails app requires for permissions management.
+
+If you need a front-end for it or a scaffold upon which to build a permissions management front-end,
+
+Check out {SanctionUi}[http://github.com/joegoggins/sanction_ui]
 
 == How it works
+Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  
 
-Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  The plugins's DSL-ish syntax embodies this idea closely.  Whereas
+The plugins's DSL-ish syntax embodies several English syntaxes very closely.  
 
-A person might ask:
-* <em>a user or a type of user</em>  
-* <em>some capability</em>															 
-* <em>the scope of the capability</em>
+=== who can do what
+A person asks to "<em>show the people that have some capability with a particular scope</em>"
 
 Sanction asks:
-  @users = User.has(:some_capability).over(:some_resource)
 
-  @users = User.has(
-    :can_enjoy_programming, 
-    :likes_coffee
-  ).over(
-    @nerdy_books,
-    @lazy_saturdays
-  )
+In general
+	@users = User.has(:some_capability).over(:some_resource)
 
+For a type of resource
+	@users = User.has(:editor).over(Magazine)
 
-How about getting all of the Users that are Magazine Editors?
-  User.has(:editor).over(Magazine) #=> [Users]
-    
-Or maybe you need to know if a specific user can read a page, without knowing their roles.
-  @user.has(:can_read).over?(@page) #=> true/false
-  
-Need to list all of the Magazines a user can edit?
-  Magazine.for(@user).with(:can_edit) #=> [Magazines]
+For a specific collection of resources
+	@users = User.has(:can_enjoy).over(@the_economist,@nerdy_blog1)
 
-Is this user a super user?
-  @user.has?(:super_user) #=> true/false
+In your application with your existing named_scopes
+and arbitrarly complex .find queries
+	
+	# active users with the :admin role
+	@users = User.active.has(:admin)
+	
+	# active users who write for the economist
+	@users = User.active.has(:writer).over(@the_economist)
 
-You can even throw your own named scopes into the mix, or chain on an ActiveRecord find()
-  User.active.has(:admin) #=> [Users]
-  Magazine.published.for(@user).with(:editor).find(:all, :conditions => {:subject => "Programming"}) #=> [Magazines]
+=== true/false capability check
+A person asks "<em>Can a person do some action on a particular thing?</em>"
+
+Sanction asks: (note the "?")
+
+	@user.has?(:super_user)  
+	@user.has(:can_read).over?(@page) 
+
+For the performance consience folks there are also the following functionally identical invocations that leverage ActiveRecord's eager loading capabilities.
+
+  @user.eager_has?(:super_user)  
+  @user.eager_has_over?(:can_read,@page)
+
+Note that these methods are only available on <em>Principal class instances</em>, to use them, @user needs to be loaded like:
+
+  @user = User.find(:first, :include => :eager_principal_roles)
+
+=== resources that users have capabilities over
+A person asks to see "<em>The things that a person has a particular capability over</em>"
+
+Sanction asks:
+	@magazines = Magazine.for(@user).with(:can_edit)
+
+	@magazines = Magazine.published.for(@user).with(:editor).find(:all, :conditions => {:subject => "Programming"})
+
+	@tacos = Food.tastiest.for(@user).with(:can_eat).find(:all, :conditions => {:subject => "Annita's Yum Yum Shop"})
+
+Notice the grammer of the sentences. What you start with is what you end up with i.e., start your sentence with your desired objects. 
+
+If you just need a true/false answer, throw a ? on the last method or use the eager_has? or eager_has_over? methods (only available on Principal instances)
+
+<b>There are more examples at the end of this document.</b>  
   
 == Granting and Revoking Access
   @user.grant(:editor, @magazine)
   @user.revoke(:editor, @magazine)
   @user.revoke(:super_user)
-  
-Notice the grammer of the sentences. What you start with is what you end up with i.e., start your sentence with your desired objects. 
-If you just need a true/false answer, throw a ? on the last method.
 
-<b>There are more examples at the end of this document.</b>  
-
-<b>Features</b>
-  - Intuitive API calls that can be composed to form sentences / questions based from principal or permissionable.
-  - Ability to chain custom scopes / finders into or after the Sanction role query api.
-  - Easily gather sets of principals or permissionables matching role criteria.
-
-=Install
+== Install
 
 After cloning / downloading, use:
 
   script/generate sanction
 
 This will stub out the config/initializers/sanction.rb used for configuration and will produce a migration for your roles table.
+
+If your principal and permissionable Active Record classes have underlying
+tables with string primary keys (rather than the Rails assumption of integer primary keys). You can also do this instead:
+
+  script/generate sanction string_ids=true
+
 Be sure to rake db:migrate to produce the roles table.
 
-=Testing
-To run the Sanction test suite, which was generated with the help of plugin_a_week's plugin_test_helper, step into the
-vendor/plugins/sanction and run rake test.
-
-You can also view the result of the last test build online @ http://runcoderun.com/matthewvermaak
-
-=Config
-
-===Example
+== Config
+=== Example
 
   Sanction.configure do |config|
     config.principals      = [Person, Login, User]
     config.permissionables = [Person, Magazine]
     
-    config.role :reader, Person => Magazine, :having => [:can_read]
-    config.role :editor, Person => Magazine, :having => [:can_edit],  :includes => [:reader]
-    config.role :writer, Person => Magazine, :having => [:can_write], :includes => [:reader]
-    config.role :owner,  Person => Magazine, :includes => [:editor, :writer]
+    config.role :reader, 
+      Person => Magazine, 
+      :having => [:can_read],
+      :purpose => "to limit who can read which Magazines"
+
+    config.role :writer, 
+      Person => Magazine, 
+      :having => [:can_write], 
+      :includes => [:reader],
+      :purpose => "to limit who can write the magazines"
+
+    config.role :editor, 
+      Person => Magazine, 
+      :having => [:can_edit, :can_create],  
+      :includes => [:reader],
+      :purpose => "to limit who can be the editor of Magazines"
+
+    config.role :owner,  
+      Person => Magazine, 
+      :includes => [:editor, :writer]
 
     config.role :super_user, Person => :global
-    config.role :boss,       Person => Person
-    config.role :admin,      [Person, Login, User] => :all, :having => :anything
+
+    config.role :boss, Person => Person
+
+    config.role :admin,
+      [Person, Login, User] => :all, 
+     :having => :anything
   end
-===Details
-<b>Declaring Principals</b>
-  
-In establishing the principal classes, you can supply an array of principals. Each of these principal classes
-will be injected with the appropriate API methods / scopes / and associations that constitute a Principal model within Sanction.
 
-<b>Declaring Permissionables</b>
+=== Details
+==== Declaring Principals & Permissionables
+Suppy an array of class names for each, each specified class will be injected with the appropriate API methods / scopes / and associations that constitute a Principal or Permissionable model within Sanction.
 
-In establishing the permissionable classes, you can supply an array of permissionables. Each of these permissionable classes
-will be injected with the appropriate API methods / scopes / and associations that constitute a Permissionable model within Sanction.
-
-<b>Declaring Roles</b>
-
+==== Declaring Roles
 In Sanction a role is defined as a name along with a relationship hash. When declaring this role additional options can also be declared.
 
   config.role role_name, relationship, options
   
-* role_name: an arbitrary string/symbol
-* relationship: a hash entry, defined as a set of Principals mapping to a set of Permissionables. Special tokens exist for mapping
-  to all permissionables(:all), or creating a role that is outside the context of permissionables (:global).
+* role_name: an arbitrary symbol
+* relationship: a hash defining a mapping between Principals and Permissionables to characterize behavior of role_name.  Special tokens exist for mapping
   * :all
-
-    config.role :admin, Person => :all
+    
+    The scope of the admin role spans over all Permissionable classes
+    as in
+      config.role :admin, Person => :all
 
   * :global
-
-    config.role :super_user, Person => :global
+    The scope of the :super_user role is outside of the context of being
+    "over" anything, it has :global scope as in
+      config.role :super_user, Person => :global
 
 * Additional Options are:
   * :includes
@@ -140,8 +175,12 @@ In Sanction a role is defined as a name along with a relationship hash. When dec
       by using :having => :anything, any query to has() will return positive for that role, which can be useful for
       "super user" type roles.
 
-=API
-<b>Principal Methods</b>
+  * :purpose
+
+    A string describing the role.  (Used by perms management front-ends like {sanction_ui}[http://github.com/joegoggins/sanction_ui])
+
+== API
+=== Principal Methods
 
 Each of the following methods are injected at the instance and class level.
 
@@ -186,7 +225,7 @@ Each of the following methods are injected at the instance and class level.
   [Only as a Class Method]
   This method is a helper for the COUNT QUIRK mentioned below.
 
-<b>Permissionable Methods</b>
+== Permissionable Methods
 
 Each of the following methods are injected at the instance and class level. (Except the total method)
 
@@ -228,13 +267,15 @@ Each of the following methods are injected at the instance and class level. (Exc
   [Only as a Class Method]
   For the COUNT QUIRK.
 
-<b>Rake tasks</b>
+== Rake tasks
+* <tt>rake sanction:roles:describe</tt>
+  This is like `rake routes` for the permissions system
+* <tt>rake sanction:roles:validate</tt>
+  Check to see if any of the referenced principals or permissionables have any invalid foreign_keys
+* <tt>rake sanction:roles:cleanse</tt>
+  Removes roles rows that are invalid
 
-* <tt>rake sanction:role:describe</tt>
-* <tt>rake sanction:role:validate</tt>
-* <tt>rake sanction:role:cleanse</tt>
-
-=Many More Examples
+== Many More Examples
 
   Sanction.configure do |config|
     config.principals      = [Person]
@@ -323,8 +364,8 @@ So a potential application code example might be:
     @magazines = Magazine.for(@person)
     @magazines_for_editing = Magazine.for(@person).with(:can_edit)
 
-=Quirks
-<b>Count</b>
+== Quirks
+=== Misleading .count method
 
 Performing a '.count' at the end of a Sanction query, with its implied count(*), can lead to misleading totals. The best thing of course is to:
   
@@ -342,10 +383,12 @@ Append that at the end of any query:
 
 To get the accurate size.
 
-<b>Single Table Inheritance</b>
+=== Won't play nice with Single Table Inheritance
 Sanction will NOT work on principal classes that implement single table inheritance due to the funkyness associated with polymorphic relationships + STI in Rails.
 
-=Comments/Questions
-Let us know matthewvermaak [at] gmail {dot} com / peterleonhardt {at} gmail [dot] com
+== Comments/Questions
+Let us know matthewvermaak [at] gmail {dot} com
+peterleonhardt {at} gmail [dot] com
+joe.goggins {at} gmail [dot] com
 
-Copyright (c) 2009 Matthew Vermaak & Peter Leonhardt, released under the MIT license
+Copyright (c) 2009 Matthew Vermaak, Peter Leonhardt, Joe Goggins released under the MIT license
