@@ -1,16 +1,33 @@
-=Sanction
+= Sanction: A role based permissions managment system.
+  # Declare the readers situation
 
-A role based permissions management system designed to have an intuitive and useful API making an authorization system easy and painless. (Even Fun!)
+  @user = User.find('you')
+  @a_tight_plugin = BitchinPlugin.find_by_name("Sanction")
 
-Sanction works on the basis of principals and permissionables. Principals are those classes which can hold agency over a permissionable. In the initial
-configuration of Sanction, you declare your principal and permissionable classes. These do not have to be disjoint sets. After setting up the principals
-and permissionables, Sanction employs the concept of a role, as being an arbitrary token acting over the relationship of a set of principals mapped to a 
-set of permissionables. The final stage of the Sanction configuration involves declaring these role definitions.
+  @user.has(:an_interest).over?(@a_tight_plugin) ?
+    "Keep reading" : 
+    "Find a different plugin"
 
-One of the key advantages of Sanction is to be able to easily access these principals or permissionables, depending on the interest of the query. This 
-allows for generating a list of permissionables for a given principal with a certain role without having to iterate over a result set.
+== How it works
 
-<b>Enough with text, how about some quick examples:</b>
+Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  The plugins's DSL-ish syntax embodies this idea closely.  Whereas
+
+A person might ask:
+* <em>a user or a type of user</em>  
+* <em>some capability</em>															 
+* <em>the scope of the capability</em>
+
+Sanction asks:
+  @users = User.has(:some_capability).over(:some_resource)
+
+  @users = User.has(
+    :can_enjoy_programming, 
+    :likes_coffee
+  ).over(
+    @nerdy_books,
+    @lazy_saturdays
+  )
+
 
 How about getting all of the Users that are Magazine Editors?
   User.has(:editor).over(Magazine) #=> [Users]
@@ -28,13 +45,13 @@ You can even throw your own named scopes into the mix, or chain on an ActiveReco
   User.active.has(:admin) #=> [Users]
   Magazine.published.for(@user).with(:editor).find(:all, :conditions => {:subject => "Programming"}) #=> [Magazines]
   
-How about giving and removing permissions?
+== Granting and Revoking Access
   @user.grant(:editor, @magazine)
   @user.revoke(:editor, @magazine)
   @user.revoke(:super_user)
   
 Notice the grammer of the sentences. What you start with is what you end up with i.e., start your sentence with your desired objects. 
-If you just need a true/false answer, throw a ? on the last method. How much simpler could it get?
+If you just need a true/false answer, throw a ? on the last method.
 
 <b>There are more examples at the end of this document.</b>  
 
