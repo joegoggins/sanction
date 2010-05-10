@@ -1,6 +1,6 @@
-= Sanction: A Kick-access control Rails plugin
+= Sanction: A permissions management Rails plugin
 
-<b>if @you.has(:an_interest).over?(@a_tight_plugin)</b>
+== if @reader.has(:an_interest).over?(@simple_permissions_management)
   "Keep reading" 
   else
   "Find a different plugin"
@@ -9,11 +9,16 @@
 == What is it
 Sanction is a role based permissions management (rails) plugin.
 
-It provides all of the back-end a Rails app requires for permissions management.
+It provides an intuitive set of extentions for ActiveRecord that
+can be used to lock down any facet of your app.
 
 If you need a front-end for it or a scaffold upon which to build a permissions management front-end,
 
 Check out {SanctionUi}[http://github.com/joegoggins/sanction_ui]
+
+=== Features
+* centralized, expressive self-documenting config
+* fast permissions managment  back-end.
 
 == How it works
 Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  
@@ -51,7 +56,7 @@ Sanction asks: (note the "?")
 	@user.has?(:super_user)  
 	@user.has(:can_read).over?(@page) 
 
-For the performance consience folks there are also the following functionally identical invocations that leverage ActiveRecord's eager loading capabilities.
+There are also the following functionally identical invocations that leverage ActiveRecord's eager loading capabilities.
 
   @user.eager_has?(:super_user)  
   @user.eager_has_over?(:can_read,@page)
@@ -193,6 +198,13 @@ Each of the following methods are injected at the instance and class level.
 
   the boolean form of has, returns true/false.
 
+* <tt>eager_has?(*roles)</tt>  [Principal Instance Method Only]
+
+  functionally identical to <tt>has?(*roles)</tt>
+  only available on principal instances where the :eager_principal_roles
+  association has been loaded, typically via something like
+    @user = User.find(:first,:include => :eager_principal_roles)
+
 * <tt>has_all?(*roles)</tt>
 
   You can end a "sentence" with this method, allowing you to ask for ALL roles to be present. This is a more expensive operation, conducting a search on each role supplied as an argument.
@@ -207,6 +219,11 @@ Each of the following methods are injected at the instance and class level.
 
   The boolean form of over, returns true/false.
 
+* <tt>eager_has_over?(*roles, permissionable)</tt> [Principal Instance Method Only]
+
+  functionally identical to <tt>.has(*roles).over?(permissionable)</tt>
+  only available on principal instances where :eager_principal_roles has been eager loaded, differs in that the check can only be done on a single permissionable
+
 * <tt>over_all?(*permissionables)</tt>
 
   You can end a "sentence" with this method, allowing you to ask for a principal who has permission over ALL of these permisisonables. Again, this is subject to the _all
@@ -220,9 +237,8 @@ Each of the following methods are injected at the instance and class level.
 
   Remove a role. Use the same signature provided to grant.
 
-* <tt>total</tt>
+* <tt>total</tt>   [Class Method Only]
 
-  [Only as a Class Method]
   This method is a helper for the COUNT QUIRK mentioned below.
 
 == Permissionable Methods
@@ -262,9 +278,7 @@ Each of the following methods are injected at the instance and class level. (Exc
 
   Match the authorize call, to remove that entry.
 
-* <tt>total</tt>
-
-  [Only as a Class Method]
+* <tt>total</tt> [Class Method Only]
   For the COUNT QUIRK.
 
 == Rake tasks
