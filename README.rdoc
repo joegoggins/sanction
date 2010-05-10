@@ -17,8 +17,8 @@ If you need a front-end for it or a scaffold upon which to build a permissions m
 Check out {SanctionUi}[http://github.com/joegoggins/sanction_ui]
 
 === Features
-* centralized, expressive self-documenting config
-* fast permissions managment  back-end.
+* centralized, expressive self-documenting configuration
+* 
 
 == How it works
 Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  
