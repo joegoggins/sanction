@@ -17,11 +17,15 @@ If you need a front-end for it or a scaffold upon which to build a permissions m
 Check out {SanctionUi}[http://github.com/joegoggins/sanction_ui]
 
 === Features
-* centralized, expressive self-documenting configuration
-* 
+* Intuitive API calls that can be composed to form human readable sentences
+* Ability to mix app specific named_scopes + .find queries into permissions related queries easily
+* Easily gather sets of permission controlled objects matching particular role criteria.
+* Expressive config initializer file, like config/routes.rb for the permissions system, run `rake sanction:roles:describe` see the summary (like `rake routes`)
 
 == How it works
-Sanction works on the basis of principals and permissionables, also known as subject and object, or user and resource.  
+Sanction is mostly a bumch of named_scope's that manipulate principals and permissionables, also known as subject and object, or user and resource.  
+
+It injects these named_scopes + methods into Principal and Permissionable ActiveRecord classes that expose the permissions management API.
 
 The plugins's DSL-ish syntax embodies several English syntaxes very closely.  
 
