@@ -16,6 +16,15 @@ module Sanction
           "
         end
       end
+      
+      # It would be weird, but in theory, you could have a Principal class
+      # that has not been saved to the db, that has been assigned a bunch of principal roles
+      # only for one request...could be handy for masquerading, this internal
+      # method also serves the purpose of loading :eager_principal_roles by making the .empty? check
+      # 
+      def is_new_record_and_eager_principal_roles_empty?
+        self.new_record? && self.eager_principal_roles.empty?
+      end
             
       def wildcard_check(*role_names)
         # .eager_has?(:anything) will yield true no matter what
@@ -33,6 +42,7 @@ module Sanction
       # This was added to be MUCH faster than hitting the db
       #
       def eager_has?(*role_names)
+        return false if is_new_record_and_eager_principal_roles_empty?
         eager_load_check
         if role_names.detect {|x| !x.kind_of? Symbol}
           raise Sanction::InvalidEagerHasUse.new("You can only include symbols when calling eager_has? perhaps you meant to call eager_has_over?")
@@ -55,6 +65,7 @@ module Sanction
       end
     
       def eager_has_over?(*args)
+        return false if is_new_record_and_eager_principal_roles_empty?
         eager_load_check
         over_object = args.last
         if over_object.kind_of? Symbol
