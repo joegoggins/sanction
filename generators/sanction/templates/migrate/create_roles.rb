@@ -22,6 +22,8 @@ class CreateRoles < ActiveRecord::Migration
     
     add_index :roles, [:principal_id, :principal_type]
     add_index :roles, [:permissionable_id, :permissionable_type]
+    add_index :roles, :principal_id
+    add_index :roles, :principal_type
     add_index :roles, :name
     add_index :roles, :global
   end
