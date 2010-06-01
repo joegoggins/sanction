@@ -281,10 +281,6 @@ class SanctionTest < Test::Unit::TestCase
     assert Person.has?(:editor)
     assert Person.has?(:writer)
 
-    assert Person.has_all?(:editor, :writer)
-    assert Person.over(Magazine).has_all?(:editor, :writer)
-    assert Person.over(Magazine.first).has_all?(:editor, :writer)
-   
     assert Person.has(:editor).over?(Magazine)
     assert Person.has(:writer).over?(Magazine)
 
@@ -306,8 +302,6 @@ class SanctionTest < Test::Unit::TestCase
     assert Person.first.grant(:editor, Magazine.last)
     assert Sanction::Role.count(:all) == 2
 
-    assert Person.has(:editor).over_all?(Magazine.first, Magazine.last)
-    assert Person.first.has(:editor).over_all?(Magazine.first, Magazine.last)
 
     assert Person.first.revoke(:editor, Magazine.first)
     assert Person.first.revoke(:editor, Magazine.last)

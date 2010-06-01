@@ -12,19 +12,7 @@ module Sanction
             if role_names.include? Sanction::Role::Definition::ANY_TOKEN
               {:conditions => [ROLE_ALIAS + ".name IS NOT NULL"]}
             else
-              role_names.map! do |role_or_permission|
-                roles_to_look_for = []
-                potential_permission_to_roles = Sanction::Role::Definition.permission_to_roles_for_principal(role_or_permission, base)
-                roles_to_look_for << potential_permission_to_roles.map(&:name) unless potential_permission_to_roles.blank?
-
-                potential_roles = Sanction::Role::Definition.with(role_or_permission) & Sanction::Role::Definition.for(base)
-                roles_to_look_for << potential_roles.map(&:name) unless potential_roles.blank?
-
-                roles_to_look_for << role_or_permission if roles_to_look_for.blank?
-                roles_to_look_for
-              end
-              role_names.flatten!
-              role_names.uniq!
+              role_names = Sanction::Role::Definition.process_role_or_permission_names_for_principal(base, *role_names)
 
               conditions = role_names.map {|r| base.merge_conditions(["#{ROLE_ALIAS}.name = ?", r.to_s])}.join(" OR ")
               {:conditions => conditions}

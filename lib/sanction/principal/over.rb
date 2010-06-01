@@ -8,15 +8,33 @@ module Sanction
       
       module InstanceMethods
         def over(*args)
-          self.class.as_principal(self).over_scope_method(*args)
+          args ||= Sanction::Role::Definition::ANY_TOKEN
+
+          if self.principal_roles_loaded?
+            self.preload_scope_merge({:preload_over => args})
+            self.execute_preload_scope
+          else
+            self.class.as_principal(self).over_scope_method(*args)
+          end
         end
 
         def over?(*args)
           !over(*args).blank?
         end
 
-        def over_all?(*args)
-          self.class.as_principal(self).over_all?(*args)
+        private
+        def preload_over(*args)
+          if args.include? Sanction::Role::Definition::ANY_TOKEN
+            self.principal_roles.select {|r| r.permissionable_type != nil}
+          else
+            p_roles = []
+            args.each do |a|
+              raise Sanction::Role::Error::UnknownPermissionable.new("Unknown permissionable: #{a}") unless Sanction::Role::Definition.valid_permissionable? a 
+
+              p_roles << self.principal_roles.select {|r| r.permissionable_match? a}
+            end
+            p_roles.flatten.uniq
+          end
         end
       end
         
@@ -40,19 +58,6 @@ module Sanction
               {:conditions => conditions}
             end
           }
-          base.named_scope :over_all_single_argument, lambda {|arg|
-            if arg == Sanction::Role::Definition::ANY_TOKEN
-              {:conditions => ["#{ROLE_ALIAS}.permissionable_type IS NOT NULL"]}
-            else
-              raise Sanction::Role::Error::UnknownPermissionable.new("Unknown permissionable: #{arg}") unless Sanction::Role::Definition.valid_permissionable? arg
-
-              if arg.is_a? Class
-                {:conditions => ["#{ROLE_ALIAS}.permissionable_type = ? AND #{ROLE_ALIAS}.permissionable_id IS NULL", arg.name.to_s]}
-              else
-                {:conditions => ["#{ROLE_ALIAS}.permissionable_type = ? AND (#{ROLE_ALIAS}.permissionable_id = ? OR #{ROLE_ALIAS}.permissionable_id IS NULL)", arg.class.name.to_s, arg.id]}
-              end
-            end
-          }
         end
   
         def over(*args)
@@ -61,19 +66,6 @@ module Sanction
         
         def over?(*args)
           !over(*args).blank?
-        end
- 
-        def over_all?(*args)
-          result = nil
-          args.each do |arg|
-            if result.nil?
-              result = self.over_all_single_argument(arg)
-            else
-              result = result & self.over_all_single_argument(arg)
-            end
-          end
-
-          !result.blank? 
         end
       end
     end
