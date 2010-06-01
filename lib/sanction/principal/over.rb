@@ -49,7 +49,7 @@ module Sanction
               conds = []
               args.each do |arg|
                 if arg.is_a? Class
-                  conds << ["#{ROLE_ALIAS}.permissionable_type = ?", arg.name.to_s]  # Need id = nil here?
+                  conds << ["#{ROLE_ALIAS}.permissionable_type = ?", arg.name.to_s] 
                 else 
                   conds << ["#{ROLE_ALIAS}.permissionable_type = ? AND (#{ROLE_ALIAS}.permissionable_id = ? OR #{ROLE_ALIAS}.permissionable_id IS NULL)", arg.class.name.to_s, arg.id]
                 end 

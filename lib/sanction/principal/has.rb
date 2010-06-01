@@ -27,32 +27,37 @@ module Sanction
         def has?(*role_names)
           !has(*role_names).blank?
         end
-                
-        def has_all?(*role_names)
-          result = nil
-          role_names.each do |role|
-            if(result.nil?) 
-              result = self.has(role)
-            else
-              result = result & has(role)
-            end
-          end
-          
-          !result.blank?
-        end
       end
       
       module InstanceMethods     
         def has(*role_names)
-          self.class.as_principal(self).has_scope_method(*role_names)
+          role_names ||= Sanction::Role::Definition::ANY_TOKEN
+
+          if self.principal_roles_loaded?
+            self.preload_scope_merge({:preload_has => role_names})
+            self.execute_preload_scope
+          else
+            self.class.as_principal(self).has_scope_method(*role_names)
+          end
         end
         
         def has?(*role_names)
           !has(*role_names).blank? 
         end
         
+
         def has_all?(*role_names)
           self.class.as_principal(self).has_all?(*role_names)
+        end
+        
+        private
+        def preload_has(*role_names)
+          if role_names.include? Sanction::Role::Definition::ANY_TOKEN 
+            self.principal_roles
+          else
+            p_roles = Sanction::Role::Definition.process_role_or_permission_names_for_principal(self.class, *role_names).map(&:to_sym)
+            self.principal_roles.select { |r| p_roles.include? r.name.to_sym }
+          end
         end
       end
     end
