@@ -7,16 +7,16 @@
 
 ==THIS IS A FORK  
 This is a fork of http://github.com/matthewvermaak/sanction, created to
-  * facilitate the creation of sanction_ui, a front-end for Sanction.
-  * make optimization tweaks to make Sanction scale to large datasets
+* facilitate the creation of sanction_ui, a front-end for Sanction.
+* make optimization tweaks to make Sanction scale to large datasets
   
 It's geared for development in my own specific apps and stuff, if you want stability, git clone from the latest tag at http://github.com/matthewvermaak/sanction
 
 Matt's code was merged into this fork on 2010-06-01, the main differences as of now 2010-06-04:
-  * a check like Reader.has(:a_billion_rows) now utilizes MySQL indexes properly,
-    the change is NOT fully integrated tho (test cases do still pass tho)
-  * a different readme
-  * my old legacy EagerHas code to be deprecated, which Matt has implemented a superior solution via :preload_roles
+* a check like Reader.has(:a_billion_rows) now utilizes MySQL indexes properly,
+  the change is NOT fully integrated tho (test cases do still pass tho)
+* a different readme
+* my old legacy EagerHas code to be deprecated, which Matt has implemented a superior solution via :preload_roles
     
 == What is it
 Sanction is a role based permissions management (rails) plugin.
