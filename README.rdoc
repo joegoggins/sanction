@@ -1,18 +1,34 @@
 = Sanction: A permissions management Rails plugin
-
 == if @reader.has(:an_interest).over?(@simple_permissions_management)
   "Keep reading" 
   else
   "Find a different plugin"
   end
 
+==THIS IS A FORK  
+This is a fork of http://github.com/matthewvermaak/sanction, created to
+  * facilitate the creation of sanction_ui, a front-end for Sanction.
+  * make optimization tweaks to make Sanction scale to large datasets
+  
+It's geared for development in my own specific apps and stuff, if you want stability, git clone from the latest tag at http://github.com/matthewvermaak/sanction
+
+Matt's code was merged into this fork on 2010-06-01, the main differences as of now 2010-06-04:
+  * a check like Reader.has(:a_billion_rows) now utilizes MySQL indexes properly,
+    the change is NOT fully integrated tho (test cases do still pass tho)
+  * a different readme
+  * my old legacy EagerHas code to be deprecated, which Matt has implemented a superior solution via :preload_roles
+    
 == What is it
 Sanction is a role based permissions management (rails) plugin.
 
 It provides an intuitive set of extentions for ActiveRecord that
 can be used to lock down any facet of your app.
 
-If you need a front-end for it or a scaffold upon which to build a permissions management front-end,
+It can also be used for non-permissions based attribute assignment, aka
+  @a_user.grant(:pretty_pink_dogs)
+  @users = User.has(:pretty_pink_dogs)
+  
+If you need a front-end for it or a scaffold upon which to build a role assignment/permissions management front-end,
 
 Check out {SanctionUi}[http://github.com/joegoggins/sanction_ui]
 
