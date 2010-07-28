@@ -12,6 +12,11 @@ module Sanction
         def revoke(role_name, over = nil)
           raise Sanction::Role::Error::UnknownPrincipal.new(self) unless Sanction::Role::Definition.valid_principal? self
 
+          if role_name == Sanction::Role::Definition::ALL_TOKEN
+            self.principal_roles.delete_all
+            self.principal_roles.reload
+          end
+          
           if(over)
             raise Sanction::Role::Error::UnknownPermissionable.new(over) unless Sanction::Role::Definition.valid_permissionable? over
 
